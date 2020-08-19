@@ -6,6 +6,7 @@ credentials = oauth2.SpotifyClientCredentials(
     client_id=client_id,
     client_secret=client_secret)
 
+print(credentials)
 
 token = credentials.get_access_token()
 
