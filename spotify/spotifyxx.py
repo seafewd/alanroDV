@@ -54,7 +54,7 @@ while True:
         for track in searchResults:
             # track details
             songName = track['name']
-            artist = track['album']['artists']['name']
+            artist = track['album']['artists'][0]['name']
             album = track['album']['name']
             releaseDate = track['album']['release_date']
             print("Track name:   " + songName)
