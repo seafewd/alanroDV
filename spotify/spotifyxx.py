@@ -7,9 +7,10 @@ import spotipy.util as util
 from json.decoder import JSONDecodeError
 
 # authenticate with the following first
-#set SPOTIPY_CLIENT_ID=<clientId>
-#set SPOTIPY_CLIENT_SECRET=<clientSecret>
-#set SPOTIPY_CLIENT_URI=https://google.com/
+#export SPOTIPY_CLIENT_ID=47fd89a9ede440dcb0c0c54c76afd6a3
+#export SPOTIPY_CLIENT_SECRET=c2a497b9d5114e19b14650b74364b9cf
+#export SPOTIPY_CLIENT_URI=https://google.com/
+#export SPOTIPY_REDIRECT_URI=https://google.com/
 
 # username NatBQIsXTr6SVGLut8wgYQ
 username = "NatBQIsXTr6SVGLut8wgYQ"
@@ -30,6 +31,8 @@ except:
 spotifyObject = spotipy.Spotify(auth=token)
 user = spotifyObject.current_user()
 username = user['display_name']
+resultLimit =  5
+
 while True:
     print()
     print("Spotipy search thingie - welcome, " + username)
@@ -47,9 +50,12 @@ while True:
         print()
 
         # get search results for track
-        searchResults = spotifyObject.search(query, 5, type="track")
+        searchResults = spotifyObject.search(query, resultLimit, type="track")
         #print(json.dumps(searchResults, indent = 4, sort_keys=True))
         searchResults = searchResults['tracks']['items']
+
+        print("Displaying the top " + str(resultLimit) + " tracks.")
+        print("")
 
         for track in searchResults:
             # track details
@@ -57,6 +63,7 @@ while True:
             artist = track['album']['artists'][0]['name']
             album = track['album']['name']
             releaseDate = track['album']['release_date']
+
             print("Track name:   " + songName)
             print("Artist:       " + artist)
             print("Album:        " + album)
@@ -68,13 +75,27 @@ while True:
         print()
 
         # get search results for artist
-        searchResults = spotifyObject.search(query, type="artist")
-        # artist details
-        artist = searchResults['artists']['items'][0]
-        print("Artist: " + artist['name'])
-        print(str(artist['followers']['total']) + " followers")
-        print("Genres: " + artist['genres'][0] + ", " + artist['genres'][1])
-        #webbrowser.open(artist['images'][0]['url'])
+        searchResults = spotifyObject.search(query, resultLimit, type="artist")
+        searchResults = searchResults['artists']['items']
+
+        print("Displaying the top " + str(resultLimit) + " artists.")
+        print("")
+
+        for artist in searchResults:
+
+            # artist details
+            artistName = artist['name']
+            followers = str(artist['followers']['total'])
+            genres = artist['genres']
+
+            print("Artist:    " + artistName)
+            print("Followers: " + followers)
+            print("Genres:    ", end="")
+            for genre in genres:
+                print(genre, end=", ")
+            print("")
+            print("")
+            #webbrowser.open(artist['images'][0]['url'])
 
         #print(displayName)
         #print(json.dumps(searchResults, indent = 4, sort_keys=True))
