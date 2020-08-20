@@ -7,18 +7,15 @@ import spotipy.util as util
 from json.decoder import JSONDecodeError
 
 # authenticate with the following first
-#export SPOTIPY_CLIENT_ID=47fd89a9ede440dcb0c0c54c76afd6a3
-#export SPOTIPY_CLIENT_SECRET=c2a497b9d5114e19b14650b74364b9cf
-#export SPOTIPY_CLIENT_URI=https://google.com/
-#export SPOTIPY_REDIRECT_URI=https://google.com/
+#export SPOTIPY_CLIENT_ID=your-spotfiy-client-id
+#export SPOTIPY_CLIENT_SECRET=your-spotify-client-secret
+#export SPOTIPY_CLIENT_URI=your-spotify-client-uri
+#export SPOTIPY_REDIRECT_URI=your-spotify-redirect-uri
 
-# username NatBQIsXTr6SVGLut8wgYQ
-username = "NatBQIsXTr6SVGLut8wgYQ"
+username = "your-spotify-user-name"
 
 # save query
 # query = sys.argv[1]
-
-# user id: seafood?si=NatBQIsXTr6SVGLut8wgYQ
 
 # erase cache and prompt for user permission
 try:
