@@ -19,6 +19,7 @@ path = ''
 global open_status_name
 open_status_name = False
 
+# clipboard
 global selected
 selected = False
 
@@ -26,6 +27,7 @@ selected = False
 
 # save as file
 def save_as_file(e):
+    global open_status_name
     text_file = tk.filedialog.asksaveasfilename(
         defaultextension=".*",
         initialdir="/saved_texts",
@@ -40,12 +42,16 @@ def save_as_file(e):
         # save file
         text_file = open(text_file, 'w')
         text_file.write(textArea.get(1.0, tk.END))
+        open_status_name = text_file
         # close file
         text_file.close()
+        print("saved as " + fileName)
 
 # save file
 def save_file(e):
+
     global open_status_name
+    print(open_status_name)
     if open_status_name:
         # save file
         text_file = open(open_status_name, 'w')
@@ -53,6 +59,7 @@ def save_file(e):
         # close file
         text_file.close()
         statusBar.config(text=f'Saved: {open_status_name}        ')
+        print("file saved")
     else:
         save_as_file(e)
 
@@ -66,8 +73,10 @@ def new_file(e):
     # reset global name
     global open_status_name
     open_status_name = False
+    print("new file")
 
 def open_file(e):
+    print("open file")
     textArea.delete("1.0", tk.END)
     # grab file name
     text_file = tk.filedialog.askopenfilename(
@@ -157,10 +166,10 @@ app.config(menu=menu_bar)
 # "File" menu
 filemenu = tk.Menu(menu_bar, tearoff=0)
 menu_bar.add_cascade(label="File", menu=filemenu)
-filemenu.add_command(label="New            ", command=new_file, accelerator="Ctrl+N")
-filemenu.add_command(label="Open", command=open_file, accelerator="Ctrl+O")
-filemenu.add_command(label="Save", command=save_file, accelerator="Ctrl+S")
-filemenu.add_command(label="Save as...", command=save_as_file, accelerator="Ctrl+Shift+S")
+filemenu.add_command(label="New            ", command=lambda: new_file(False), accelerator="Ctrl+N")
+filemenu.add_command(label="Open", command=lambda: open_file(False), accelerator="Ctrl+O")
+filemenu.add_command(label="Save", command=lambda: save_file(False), accelerator="Ctrl+S")
+filemenu.add_command(label="Save as...", command=lambda: save_as_file(False), accelerator="Ctrl+Shift+S")
 filemenu.add_separator()
 filemenu.add_command(label="Exit", command=quit)
 
@@ -213,9 +222,8 @@ app.bind('<Control-Key-c>', copy_text)
 app.bind('<Control-Key-v>', paste_text)
 app.bind('<Control-Key-o>', open_file)
 app.bind('<Control-Key-s>', save_file)
+app.bind('<Shift-Control-S>', save_as_file)
 app.bind('<Control-Key-n>', new_file)
-
-
 
 ######################################################
 
