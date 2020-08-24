@@ -4,49 +4,28 @@ import tkinter.filedialog
 # Tutorial: https://www.youtube.com/watch?v=UlQRXJWUNBA
 # Canvas:   https://canvas.gu.se/courses/37080/assignments/60654?module_item_id=209969
 
-# Text Editor Skeleton
 
-def on_new():
-    # reset path and delete all text in the text box
-    print("Not implemented")
+# Initialize application
+app = tk.Tk()
+app.title("Galaxy brain editor")
+# Sets the geometry on the form widthxheight+x_pos+y_pos
+app.geometry("800x500+300+300")
 
+# Save path, empty until file is opened or saved
+# Used to mimic common file saving/opening behavior
+path = ''
 
-def on_open():
-    # let user choose what file to open from a dialog (tkFileDialog)
-    # replace text in text box with text from file
-    # handle cancelling of the dialog responsibly
-    print("Not implemented")
+# set variable for open file name
+global open_status_name
+open_status_name = False
 
+global selected
+selected = False
 
-def on_save():
-    # mimic common "save" behavior
-    # if the path is already set, save the file using save_file(), otherwise:
-    # let user choose a file to save the content in the text box to (tkFileDialog)
-    # make sure the path is valid (not empty), save the file using save_file()
-    print("Not implemented")
-
-
-def on_save_as():
-    # mimic common "save as" behavior
-    # almost the same as on_save(), difference: this always opens a file dialog
-    print("Not implemented")
-
-
-def get_all_text():
-    # returns all text in the text box
-    # should be one line of code
-    # not necessary but may make the code in other places nicer
-    print("Not implemented")
-
-
-def delete_all_text():
-    # deletes all text in the text box
-    # should be one line of code
-    # not neccessary but may make the code in other places nicer
-    print("Not implemented")
+# ----------------------------------------------------
 
 # save as file
-def save_file():
+def save_as_file(e):
     text_file = tk.filedialog.asksaveasfilename(
         defaultextension=".*",
         initialdir="/saved_texts",
@@ -64,30 +43,50 @@ def save_file():
         # close file
         text_file.close()
 
+# save file
+def save_file(e):
+    global open_status_name
+    if open_status_name:
+        # save file
+        text_file = open(open_status_name, 'w')
+        text_file.write(textArea.get(1.0, tk.END))
+        # close file
+        text_file.close()
+        statusBar.config(text=f'Saved: {open_status_name}        ')
+    else:
+        save_as_file(e)
 
-def read_file(file_path):
-    # open file in file_path
-    # return the text
-    print("Not implemented")
-
-def new_file():
+def new_file(e):
     # from first line to end
     textArea.delete("1.0", tk.END)
     # update status bar
     app.title("Galaxy brain editor - New File")
     statusBar.config(text="New File        ")
 
-def open_file():
+    # reset global name
+    global open_status_name
+    open_status_name = False
+
+def open_file(e):
     textArea.delete("1.0", tk.END)
     # grab file name
     text_file = tk.filedialog.askopenfilename(
         initialdir="/saved_texts/",
         title="Open File",
         filetypes=(("Text Files", "*.txt"), ("HTML Files", "*.html"), ("Python Files", "*.py"), ("All Files", "*.*")))
-    # full path
+
+    # get full path
     name = text_file
+
+    # check if there is a file name
+    if text_file:
+        # make file name global so we can access it later
+        global open_status_name
+        open_status_name = text_file
+
     # get only file name from path
     fileName = name[name.rindex("/")+1:]
+
     # update status bar
     statusBar.config(text=f'{name}        ')
     app.title(f'{fileName} - Galaxy Brain')
@@ -99,16 +98,51 @@ def open_file():
     textArea.insert(tk.END, textInFile)
     text_file.close()
 
+# Cut text
+def cut_text(e):
+    print("cut")
+    global selected
+    selection = textArea.selection_get()
+    # check if keyboard shortcut used
+    if e:
+        selected = app.clipboard_get()
+    else:
+        if selection:
+            # grab selected text from textbox
+            selected = selection
+            # delete from first highlighted to last highlighted
+            textArea.delete("sel.first", "sel.last")
+            app.clipboard_clear()
+            app.clipboard_append(selected)
 
-# Initialize application
-app = tk.Tk()
-app.title("Galaxy brain editor")
-# Sets the geometry on the form widthxheight+x_pos+y_pos
-app.geometry("800x500+300+300")
+def copy_text(e):
+    print("copy")
+    global selected
+    selection = textArea.selection_get()
+    # check to see if we used keyboard shortcuts
+    if e:
+        selected = app.clipboard_get()
 
-# Save path, empty until file is opened or saved
-# Used to mimic common file saving/opening behavior
-path = ''
+    if selection:
+        # grab selected text from textbox
+        selected = selection
+        # clear clipboard and set it to new selection
+        app.clipboard_clear()
+        app.clipboard_append(selected)
+
+def paste_text(e):
+    print("paste")
+    global selected
+    # check to see if keyboard shortcut used
+    if e:
+        selected = app.clipboard_get()
+    else:
+        if selected:
+            # assign position to wherever cursor is
+            position = textArea.index(tk.INSERT)
+            textArea.insert(position, selected)
+
+
 
 ######################################################
 # IMPLEMENT UI HERE
@@ -123,41 +157,64 @@ app.config(menu=menu_bar)
 # "File" menu
 filemenu = tk.Menu(menu_bar, tearoff=0)
 menu_bar.add_cascade(label="File", menu=filemenu)
-filemenu.add_command(label="New", command=new_file)
-filemenu.add_command(label="Open", command=open_file)
-filemenu.add_command(label="Save (Ctrl+s)", command=quit)
-filemenu.add_command(label="Save as...", command=save_file)
+filemenu.add_command(label="New            ", command=new_file, accelerator="Ctrl+N")
+filemenu.add_command(label="Open", command=open_file, accelerator="Ctrl+O")
+filemenu.add_command(label="Save", command=save_file, accelerator="Ctrl+S")
+filemenu.add_command(label="Save as...", command=save_as_file, accelerator="Ctrl+Shift+S")
 filemenu.add_separator()
 filemenu.add_command(label="Exit", command=quit)
 
 # "Edit" menu
 editMenu = tk.Menu(menu_bar, tearoff=0)
 menu_bar.add_cascade(label="Edit", menu=editMenu)
-editMenu.add_command(label="Cut", command=quit)
-editMenu.add_command(label="Copy", command=quit)
-editMenu.add_command(label="Paste", command=quit)
-editMenu.add_command(label="Undo", command=quit)
-editMenu.add_command(label="Redo", command=quit)
+editMenu.add_command(label="Cut            ", command=lambda: cut_text(False), accelerator="Ctrl+X")
+editMenu.add_command(label="Copy", command=lambda: copy_text(False), accelerator="Ctrl+C")
+editMenu.add_command(label="Paste", command=lambda: paste_text(False), accelerator="Ctrl+V")
+editMenu.add_separator()
+editMenu.add_command(label="Undo", accelerator="Ctrl+Z")
+editMenu.add_command(label="Redo", accelerator="Ctrl+Y")
 
 # Main frame
 frame = tk.Frame(app)
 frame.pack(pady=5)
 
 # BUTTON EXAMPLE
-button = tk.Button(app, text="Exit", command=quit)
-button.pack(side=tk.BOTTOM, fill=tk.X)
+# button = tk.Button(app, text="Exit", command=quit)
+# button.pack(side=tk.BOTTOM, fill=tk.X)
 
-# SCROLLBAR
-scrollbar = tk.Scrollbar(frame)
-scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+# SCROLLBARS
+scrollbarY = tk.Scrollbar(frame)
+scrollbarY.pack(side=tk.RIGHT, fill=tk.Y)
+scrollbarX = tk.Scrollbar(frame, orient='horizontal')
+scrollbarX.pack(side=tk.BOTTOM, fill=tk.X)
 
 # STATUS BAR
 statusBar = tk.Label(app, text='Ready        ', )
 statusBar.pack(fill=tk.X, side=tk.RIGHT, ipady=5)
 
 # TEXT WIDGET
-textArea = tk.Text(frame, height=25, width=97, undo=True, yscrollcommand=scrollbar.set)
+textArea = tk.Text(
+    frame,
+    height=25,
+    width=97,
+    undo=True,
+    yscrollcommand=scrollbarY.set,
+    xscrollcommand=scrollbarX.set,
+    wrap="none")
 textArea.pack()
+
+# config scroll bars
+scrollbarY.config(command=textArea.yview())
+scrollbarX.config(command=textArea.xview())
+
+# edit bindings
+app.bind('<Control-Key-x>', cut_text)
+app.bind('<Control-Key-c>', copy_text)
+app.bind('<Control-Key-v>', paste_text)
+app.bind('<Control-Key-o>', open_file)
+app.bind('<Control-Key-s>', save_file)
+app.bind('<Control-Key-n>', new_file)
+
 
 
 ######################################################
