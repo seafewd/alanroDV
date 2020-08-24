@@ -21,7 +21,8 @@ username = "your-spotify-user-name"
 try:
     token = util.prompt_for_user_token(username)
 except:
-    os.remove(f".cache-{username}")
+    if os.path.exists(f".cache-{username}"):
+      os.remove(f".cache-{username}")
     token = util.prompt_for_user_token(username)
 
 # spotify object
