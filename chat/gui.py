@@ -5,7 +5,9 @@ from kivy.uix.label import Label
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.scrollview import ScrollView
 from kivy.clock import Clock
+from kivy.core.window import Window
 import socket_client
 import sys
 import os
@@ -83,13 +85,16 @@ class ConnectPage(GridLayout):
 
 class ChatApp(App):
     def build(self):
+        # screen manager for multiple screens
         self.screen_manager = ScreenManager()
-
+        # initial connection screen
+        # create a pagee, then a screen. add page to screen and screen to screen manager
         self.connect_page = ConnectPage()
         screen = Screen(name="Connect")
         screen.add_widget(self.connect_page)
         self.screen_manager.add_widget(screen)
 
+        # info page
         self.info_page = InfoPage()
         screen = Screen(name="Info")
         screen.add_widget(self.info_page)
@@ -103,12 +108,76 @@ class ChatApp(App):
         screen.add_widget(self.chat_page)
         self.screen_manager.add_widget(screen)
 
+
 class ChatPage(GridLayout):
     def __init__(self, **kwargs):
         # run init method from GridLayout
         super().__init__(**kwargs)
+
         self.cols = 1
-        self.add_widget(Label(text="Hey at least it worked up to this point!!11"))
+        self.rows = 2
+
+        self.history = ScrollableLabel(height=Window.size[1] * 0.9, size_hint_y=None)
+        self.add_widget(self.history)
+
+        self.new_message = TextInput(width=Window.size[0] * 0.8, size_hint_x=None, multiline=False)
+        self.send = Button(text="Send")
+        self.send.bind(on_press=self.send_message)
+
+        # add grid with two columns containing message and send button
+        bottom_line = GridLayout(cols=2)
+        bottom_line.add_widget(self.new_message)
+        bottom_line.add_widget(self.send)
+        # add this to the widget
+        self.add_widget(bottom_line)
+
+        # bind function to use enter key to be able to send a message
+        Window.bind(on_key_down=self.on_key_down)
+
+        Clock.schedule_once(self.focus_text_input, 1)
+        socket_client.start_listening(self.incoming_message, show_error)
+        self.bind(size=self.adjust_fields)
+
+    # Updates page layout
+    def adjust_fields(self, *_):
+        # Chat history height - 90%, but at least 50px for bottom new message/send button part
+        if Window.size[1] * 0.1 < 50:
+            new_height = Window.size[1] - 50
+        else:
+            new_height = Window.size[1] * 0.9
+        self.history.height = new_height
+
+        # New message input width - 80%, but at least 160px for send button
+        if Window.size[0] * 0.2 < 160:
+            new_width = Window.size[0] - 160
+        else:
+            new_width = Window.size[0] * 0.8
+        self.new_message.width = new_width
+
+        # Update chat history layout
+        # self.history.update_chat_history_layout()
+        Clock.schedule_once(self.history.update_chat_history_layout, 0.01)
+
+    def on_key_down(self, instance, keyboard, keycode, text, modifiers):
+        # enter key
+        if keycode == 40:
+            self.send_message(None)
+
+    def send_message(self, _):
+        message = self.new_message.text
+        self.new_message.text = ""
+        if message:
+            # own user's message + color
+            self.history.update_chat_history(f"[color=dd2020]{chat_app.connect_page.username.text}[/color] > {message}")
+            socket_client.send(message)
+
+        Clock.schedule_once(self.focus_text_input, 0.1)
+
+    def focus_text_input(self, _):
+        self.new_message.focus = True
+
+    def incoming_message(self, username, message):
+        self.history.update_chat_history(f"[color=20dd20]{username}[/color] > {message}")
 
 
 class InfoPage(GridLayout):
@@ -127,6 +196,45 @@ class InfoPage(GridLayout):
         self.message.text_size = (self.message.width*0.9, None)
 
 
+# kivy doesnt provide a scrollable label, so we need to create one
+class ScrollableLabel(ScrollView):
+    def __init__(self, **kwargs):
+        # run init method from GridLayout
+        super().__init__(**kwargs)
+
+        self.layout = GridLayout(cols=1, size_hint_y=None)
+        self.add_widget(self.layout)
+
+        self.chat_history = Label(size_hint_y=None, markup=True)
+        self.scroll_to_point = Label()
+
+        self.layout.add_widget(self.chat_history)
+        self.layout.add_widget(self.scroll_to_point)
+
+    # add new message to the chat history
+    def update_chat_history(self, message):
+        # add new line and message
+        self.chat_history.text += '\n' + message
+
+        # set layout height to height of chat history text + 15 pixels
+        self.layout.height = self.chat_history.texture_size[1] + 15
+        # set chat history label to height of chat history text
+        self.chat_history.height = self.chat_history.texture_size[1]
+        # set width of chat history text to 98% of label width
+        self.chat_history.text_size = (self.chat_history.width*.98, None)
+
+        # scroll to bottom of layout
+        self.scroll_to(self.scroll_to_point)
+
+    def update_chat_history_layout(self, _=None):
+        # Set layout height to height of chat history + 15 pixels
+        self.layout.height = self.chat_history.texture_size[1] + 15
+        # set chat history label to height of chat history text
+        self.chat_history.height = self.chat_history.texture_size[1]
+        # set width of chat history text to 98% of the label width
+        self.chat_history.text_size = (self.chat_history.width * 0.98, None)
+
+
 def show_error(message):
     chat_app.info_page.update_info(message)
     chat_app.screen_manager.current = "Info"
@@ -136,4 +244,3 @@ def show_error(message):
 if __name__ == "__main__":
     chat_app = ChatApp()
     chat_app.run()
-

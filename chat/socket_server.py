@@ -33,7 +33,7 @@ sockets_list = [server_socket]
 # List of connected clients - socket as a key, user header and name as data
 clients = {}
 
-print(f'Listening for connections on {IP}:{PORT}...')
+print(f'Server started\nListening for connections on {IP}:{PORT}...')
 
 
 # handle message receiving
@@ -58,7 +58,6 @@ def receive_message(client_socket):
 
 
 while True:
-    print("started")
     read_sockets, _, exception_sockets = select.select(
         # read list - the things we wanna to read in
         sockets_list,
@@ -87,7 +86,7 @@ while True:
             message = receive_message(notified_socket)
             # message is false - delete socket
             if message is False:
-                print("Closed connection from {clients[notified_socket]['data'].decode('utf-8')}")
+                print(f"Closed connection from {clients[notified_socket]['data'].decode('utf-8')}")
                 sockets_list.remove(notified_socket)
                 del clients[notified_socket]
                 continue
