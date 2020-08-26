@@ -2,6 +2,7 @@ import socket
 import select
 
 HEADER_LENGTH = 10
+
 IP = "127.0.0.1"
 PORT = 1234
 
@@ -29,21 +30,29 @@ server_socket.listen()
 # list of clients/sockets
 sockets_list = [server_socket]
 
-# clients dict
+# List of connected clients - socket as a key, user header and name as data
 clients = {}
 
-# receive message from client
+print(f'Listening for connections on {IP}:{PORT}...')
+
+
+# handle message receiving
 def receive_message(client_socket):
     try:
+        # receive our "header" containing message length, its size is defined and constant
         message_header = client_socket.recv(HEADER_LENGTH)
         if not len(message_header):
             return False
-        # strip to exclude spaces
+        # convert header to int value and strip to exclude spaces
         message_length = int(message_header.decode("utf-8").strip())
+
+        # return an object of message header and message data
         return {
             "header": message_header,
             "data": client_socket.recv(message_length)
         }
+
+    # fatal error!
     except:
         return False
 
@@ -72,7 +81,9 @@ while True:
 
             print(f"Accepted new connection from {client_address[0]}:{client_address[1]} username: {user['data'].decode('utf-8')}")
 
+        # else existing socket is sending a message
         else:
+            # receive message
             message = receive_message(notified_socket)
             # message is false - delete socket
             if message is False:
@@ -81,10 +92,11 @@ while True:
                 del clients[notified_socket]
                 continue
 
+            # get user by notified socket, so we know who sent the message
             user = clients[notified_socket]
             print(f"Received message from {user['data'].decode('utf-8')}: {message['data'].decode('utf-8')}")
 
-            # share message with everybody
+            # iterate over connected clients and broadcast message
             for client_socket in clients:
                 # dont send it back to the sender
                 if client_socket != notified_socket:
@@ -95,19 +107,7 @@ while True:
                         message['data']
                     )
 
+    # handle some socket exceptions just in case
     for notified_socket in exception_sockets:
         sockets_list.remove(notified_socket)
         del clients[notified_socket]
-
-
-
-
-
-
-
-
-
-
-
-
-
